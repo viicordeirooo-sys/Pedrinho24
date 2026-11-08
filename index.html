@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>Pedrinho 24</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap">
+<style>
+/* Layout: canvas 3D fixo ao fundo; texto rola por cima em telas. Identidade do painel: azul-marinho + branco, Jost. */
+:root {
+  --navy: #262A63;
+  --navy-soft: #3A3F7A;
+  --paper: #FFFFFF;
+  --paper-glass: rgba(255, 255, 255, 0.86);
+  --ink: #262A63;
+  --hair: rgba(38, 42, 99, 0.16);
+  --display: "Jost", "Futura", "Century Gothic", "Avenir Next", sans-serif;
+  --body: "Jost", "Avenir Next", "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+/* Identidade fixa (azul-marinho sobre branco), igual ao painel da festa: não muda com o tema escuro. */
+html, body { background: var(--paper); color: var(--ink); }
+body {
+  font-family: var(--body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+body.locked { overflow: hidden; height: 100%; }
+
+#scene {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  z-index: 0;
+  touch-action: pan-y;
+}
+
+/* ---------- Entrada ---------- */
+#gate {
+  position: fixed; inset: 0; z-index: 20;
+  display: grid; place-items: center;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.92) 0 28%, rgba(255,255,255,0.35) 62%, rgba(255,255,255,0) 100%);
+  transition: opacity .9s ease, visibility .9s;
+}
+#gate.gone { opacity: 0; visibility: hidden; }
+.gate-inner { display: grid; justify-items: center; gap: 22px; text-align: center; }
+.gate-name {
+  font-family: var(--display); font-weight: 500;
+  letter-spacing: 0.32em; text-indent: 0.32em;
+  font-size: clamp(15px, 4.2vw, 20px);
+  color: var(--navy);
+  margin: 0;
+}
+#enter {
+  appearance: none; border: 0; cursor: pointer;
+  width: 132px; height: 132px; border-radius: 50%;
+  background: var(--navy); color: var(--paper);
+  font-family: var(--display); font-weight: 500;
+  font-size: 15px; letter-spacing: 0.24em; text-indent: 0.24em;
+  text-transform: uppercase;
+  box-shadow: 0 0 0 10px rgba(38,42,99,0.10), 0 18px 40px rgba(38,42,99,0.28);
+  animation: breathe 2.6s ease-in-out infinite;
+}
+#enter:focus-visible { outline: 3px solid var(--navy-soft); outline-offset: 8px; }
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 0 10px rgba(38,42,99,0.10), 0 18px 40px rgba(38,42,99,0.28); }
+  50% { box-shadow: 0 0 0 22px rgba(38,42,99,0.04), 0 18px 40px rgba(38,42,99,0.28); }
+}
+
+/* ---------- Conteúdo rolável ---------- */
+main {
+  position: relative; z-index: 2;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  pointer-events: none;
+}
+.screen {
+  min-height: 100vh; min-height: 100svh;
+  display: grid; align-content: center; justify-items: center;
+}
+.hero { align-content: end; padding-block: 0 9vh; }
+.hint {
+  display: grid; justify-items: center; gap: 10px;
+  font-size: 12px; letter-spacing: 0.3em; text-indent: 0.3em; text-transform: uppercase;
+  color: var(--navy); opacity: 0; transition: opacity 1s ease 1.6s;
+}
+body.in .hint { opacity: .8; }
+.hint i {
+  width: 1px; height: 38px; background: var(--navy);
+  transform-origin: top; animation: drip 1.8s ease-in-out infinite;
+}
+@keyframes drip { 0% { transform: scaleY(0); } 50% { transform: scaleY(1); } 100% { transform: scaleY(1); opacity: 0; } }
+
+.line { min-height: 92vh; min-height: 92svh; }
+.card {
+  max-width: 30rem; width: 100%;
+  background: var(--paper-glass);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid var(--hair);
+  padding: 30px 28px;
+  box-shadow: 0 24px 60px rgba(38,42,99,0.18);
+  transform: translateY(26px) scale(.98);
+  opacity: .0;
+  transition: transform 1s cubic-bezier(.2,.8,.2,1), opacity 1s ease;
+}
+.card.show { transform: none; opacity: 1; }
+.card p {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: clamp(22px, 6.2vw, 30px);
+  line-height: 1.32;
+  letter-spacing: 0.005em;
+  text-wrap: balance;
+  color: var(--navy);
+}
+
+.finale { min-height: 120vh; min-height: 120svh; align-content: center; }
+.finale .card { text-align: center; padding: 40px 28px 36px; }
+.thanks {
+  margin: 0 0 18px;
+  font-family: var(--display); font-weight: 600;
+  font-size: clamp(40px, 13vw, 72px);
+  letter-spacing: 0.16em; text-indent: 0.16em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--navy);
+}
+.finale .sign {
+  font-size: clamp(18px, 5vw, 22px);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+.finale .sign b { font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; }
+
+/* Sem JS ou sem WebGL: tudo legível */
+.no3d .card { opacity: 1; transform: none; }
+.no3d #gate { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; opacity: 1; transform: none; }
+  #enter, .hint i { animation: none; }
+}
+</style>
+
+</head>
+<body>
+<canvas id="scene" aria-hidden="true"></canvas>
+
+<div id="gate">
+  <div class="gate-inner">
+    <p class="gate-name">PEDRINHO</p>
+    <button id="enter" type="button">Entrar</button>
+  </div>
+</div>
+
+<main id="story">
+  <section class="screen hero" aria-label="Pedrinho">
+    <div class="hint" aria-hidden="true">Role<i></i></div>
+  </section>
+
+  <section class="screen line"><div class="card"><p>Ter vocês aqui hoje é o melhor presente que eu poderia receber.</p></div></section>
+  <section class="screen line"><div class="card"><p>Obrigado por cada risada, cada conselho e cada momento que dividimos até aqui.</p></div></section>
+  <section class="screen line"><div class="card"><p>Vocês deixam a vida mais leve e este dia muito mais especial.</p></div></section>
+  <section class="screen line"><div class="card"><p>Que esse dia fique guardado na memória de todos nós.</p></div></section>
+
+  <section class="screen finale">
+    <div class="card">
+      <h1 class="thanks">Obrigado</h1>
+      <p class="sign">Com carinho, <b>Pedrinho</b></p>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var GLYPHS = {"w":8.614,"shapes":[{"outer":[[-4.1957,0.5],[-4.1957,-0.5],[-4.0271,-0.5],[-4.0271,-0.1214],[-3.8942,-0.1214],[-3.8672,-0.1208],[-3.8411,-0.1191],[-3.816,-0.1161],[-3.7917,-0.112],[-3.7685,-0.1066],[-3.7461,-0.1001],[-3.7247,-0.0924],[-3.7042,-0.0836],[-3.6848,-0.0736],[-3.6664,-0.0626],[-3.6492,-0.0507],[-3.633,-0.0377],[-3.6179,-0.0237],[-3.6039,-0.0087],[-3.591,0.0073],[-3.5792,0.0243],[-3.5687,0.0422],[-3.5596,0.0609],[-3.5518,0.0804],[-3.5455,0.1007],[-3.5406,0.1218],[-3.5371,0.1438],[-3.5349,0.1665],[-3.5342,0.19],[-3.5349,0.2135],[-3.5371,0.2362],[-3.5406,0.2581],[-3.5455,0.2791],[-3.5518,0.2993],[-3.5596,0.3187],[-3.5687,0.3373],[-3.5792,0.355],[-3.591,0.3718],[-3.6039,0.3877],[-3.6179,0.4025],[-3.633,0.4164],[-3.6492,0.4293],[-3.6664,0.4413],[-3.6848,0.4522],[-3.7042,0.4621],[-3.7247,0.471],[-3.7461,0.4787],[-3.7685,0.4852],[-3.7917,0.4905],[-3.816,0.4947],[-3.8411,0.4976],[-3.8672,0.4994],[-3.8942,0.5]],"holes":[[[-4.0271,0.0271],[-4.0271,0.3514],[-3.8942,0.3514],[-3.873,0.3508],[-3.8528,0.3489],[-3.8337,0.3457],[-3.8157,0.3413],[-3.7987,0.3355],[-3.7828,0.3285],[-3.768,0.3203],[-3.7542,0.3107],[-3.7419,0.2999],[-3.7311,0.2879],[-3.722,0.2747],[-3.7146,0.2602],[-3.7088,0.2445],[-3.7047,0.2275],[-3.7022,0.2094],[-3.7014,0.19],[-3.7022,0.1706],[-3.7047,0.1524],[-3.7088,0.1354],[-3.7146,0.1196],[-3.722,0.1051],[-3.7311,0.0917],[-3.7419,0.0795],[-3.7542,0.0686],[-3.768,0.0589],[-3.7828,0.0504],[-3.7987,0.0433],[-3.8157,0.0375],[-3.8337,0.033],[-3.8528,0.0297],[-3.873,0.0278],[-3.8942,0.0271]]]},{"outer":[[-3.17,0.5],[-3.17,-0.5],[-2.5614,-0.5],[-2.5614,-0.3514],[-3.0042,-0.3514],[-3.0042,-0.0371],[-2.59,-0.0371],[-2.59,0.1086],[-3.0042,0.1086],[-3.0042,0.3514],[-2.5614,0.3514],[-2.5614,0.5]],"holes":[]},{"outer":[[-2.1542,0.5],[-2.1542,-0.5],[-1.8314,-0.5],[-1.7938,-0.499],[-1.7573,-0.4961],[-1.722,-0.4913],[-1.6878,-0.4845],[-1.6548,-0.4757],[-1.623,-0.465],[-1.5923,-0.4524],[-1.5628,-0.4379],[-1.5347,-0.4215],[-1.5081,-0.4037],[-1.4832,-0.3842],[-1.4598,-0.3632],[-1.438,-0.3406],[-1.4178,-0.3165],[-1.3991,-0.2908],[-1.3821,-0.2636],[-1.3669,-0.2349],[-1.3537,-0.205],[-1.3425,-0.1739],[-1.3334,-0.1416],[-1.3262,-0.108],[-1.3212,-0.0733],[-1.3181,-0.0372],[-1.3171,0.0],[-1.3181,0.0372],[-1.3212,0.0733],[-1.3262,0.108],[-1.3334,0.1416],[-1.3425,0.1739],[-1.3537,0.205],[-1.3669,0.2349],[-1.3821,0.2636],[-1.3991,0.2908],[-1.4178,0.3165],[-1.438,0.3406],[-1.4598,0.3632],[-1.4832,0.3842],[-1.5081,0.4037],[-1.5347,0.4215],[-1.5628,0.4379],[-1.5923,0.4524],[-1.623,0.465],[-1.6548,0.4757],[-1.6878,0.4845],[-1.722,0.4913],[-1.7573,0.4961],[-1.7938,0.499],[-1.8314,0.5]],"holes":[[[-1.9814,-0.3414],[-1.9814,0.3414],[-1.8357,0.3414],[-1.8173,0.3411],[-1.7992,0.3401],[-1.7816,0.3384],[-1.7642,0.3361],[-1.7473,0.3331],[-1.7307,0.3294],[-1.7144,0.325],[-1.6985,0.32],[-1.6831,0.3143],[-1.6681,0.3079],[-1.6537,0.3009],[-1.6398,0.2932],[-1.6264,0.2848],[-1.6135,0.2758],[-1.6011,0.2661],[-1.5892,0.2557],[-1.5779,0.2447],[-1.5673,0.2329],[-1.5572,0.2206],[-1.5478,0.2075],[-1.539,0.1938],[-1.5308,0.1794],[-1.5233,0.1643],[-1.5164,0.1486],[-1.5102,0.1322],[-1.5048,0.1152],[-1.5003,0.0975],[-1.4966,0.0793],[-1.4937,0.0604],[-1.4916,0.0409],[-1.4904,0.0208],[-1.49,0.0],[-1.4904,-0.0208],[-1.4916,-0.0409],[-1.4937,-0.0604],[-1.4966,-0.0793],[-1.5003,-0.0975],[-1.5048,-0.1152],[-1.5102,-0.1322],[-1.5164,-0.1486],[-1.5233,-0.1643],[-1.5308,-0.1793],[-1.539,-0.1937],[-1.5478,-0.2073],[-1.5572,-0.2203],[-1.5673,-0.2325],[-1.5779,-0.2441],[-1.5892,-0.255],[-1.6011,-0.2652],[-1.6135,-0.2748],[-1.6264,-0.2838],[-1.6398,-0.2921],[-1.6537,-0.2999],[-1.6681,-0.307],[-1.6831,-0.3134],[-1.6985,-0.3193],[-1.7144,-0.3245],[-1.7307,-0.329],[-1.7473,-0.3328],[-1.7642,-0.3359],[-1.7816,-0.3383],[-1.7992,-0.34],[-1.8173,-0.3411],[-1.8357,-0.3414]]]},{"outer":[[-0.9528,0.5],[-0.9528,-0.5],[-0.7842,-0.5],[-0.7842,-0.1214],[-0.68,-0.1214],[-0.4285,-0.5],[-0.2242,-0.5],[-0.5071,-0.1029],[-0.5,-0.1007],[-0.4931,-0.0984],[-0.4863,-0.096],[-0.4796,-0.0936],[-0.4731,-0.091],[-0.4667,-0.0884],[-0.4604,-0.0857],[-0.4542,-0.0829],[-0.4348,-0.0727],[-0.4164,-0.0616],[-0.3992,-0.0495],[-0.383,-0.0364],[-0.3679,-0.0224],[-0.3539,-0.0073],[-0.341,0.0087],[-0.3292,0.0257],[-0.3187,0.0436],[-0.3096,0.0622],[-0.3018,0.0816],[-0.2955,0.1018],[-0.2906,0.1227],[-0.2871,0.1444],[-0.2849,0.1668],[-0.2842,0.19],[-0.2849,0.2132],[-0.2871,0.2356],[-0.2906,0.2572],[-0.2955,0.278],[-0.3018,0.2981],[-0.3096,0.3174],[-0.3187,0.3359],[-0.3292,0.3536],[-0.341,0.3704],[-0.3539,0.3863],[-0.3679,0.4012],[-0.383,0.4152],[-0.3992,0.4282],[-0.4164,0.4402],[-0.4348,0.4513],[-0.4542,0.4614],[-0.4747,0.4705],[-0.4961,0.4783],[-0.5185,0.4849],[-0.5417,0.4904],[-0.566,0.4946],[-0.5911,0.4976],[-0.6172,0.4994],[-0.6442,0.5]],"holes":[[[-0.7842,0.0186],[-0.7842,0.3543],[-0.6514,0.3543],[-0.637,0.354],[-0.6231,0.353],[-0.6097,0.3515],[-0.5967,0.3493],[-0.5843,0.3465],[-0.5724,0.343],[-0.5609,0.339],[-0.55,0.3343],[-0.5395,0.329],[-0.5297,0.3232],[-0.5204,0.3169],[-0.5117,0.31],[-0.5036,0.3026],[-0.4961,0.2946],[-0.4892,0.2862],[-0.4828,0.2771],[-0.4771,0.2676],[-0.4722,0.2575],[-0.468,0.2469],[-0.4646,0.2357],[-0.4619,0.224],[-0.46,0.2118],[-0.4589,0.199],[-0.4585,0.1857],[-0.4589,0.1727],[-0.46,0.1602],[-0.4619,0.1482],[-0.4646,0.1366],[-0.468,0.1255],[-0.4722,0.1149],[-0.4771,0.1047],[-0.4828,0.095],[-0.4892,0.0858],[-0.4961,0.0772],[-0.5036,0.0692],[-0.5117,0.0618],[-0.5204,0.0549],[-0.5297,0.0487],[-0.5395,0.043],[-0.55,0.0379],[-0.5609,0.0333],[-0.5724,0.0294],[-0.5843,0.0261],[-0.5967,0.0234],[-0.6097,0.0213],[-0.6231,0.0198],[-0.637,0.0189],[-0.6514,0.0186]]]},{"outer":[[0.0972,0.5],[0.0972,-0.5],[0.2686,-0.5],[0.2686,0.5]],"holes":[]},{"outer":[[1.42,0.5],[1.42,-0.1714],[0.69,0.55],[0.69,-0.5],[0.8558,-0.5],[0.8558,0.1714],[1.5858,-0.55],[1.5858,0.5]],"holes":[]},{"outer":[[2.68,0.5],[2.68,0.1143],[2.1772,0.1143],[2.1772,0.5],[2.0086,0.5],[2.0086,-0.5],[2.1772,-0.5],[2.1772,-0.0414],[2.68,-0.0414],[2.68,-0.5],[2.8486,-0.5],[2.8486,0.5]],"holes":[]},{"outer":[[3.2143,0.0],[3.2149,-0.0276],[3.2167,-0.0547],[3.2198,-0.0814],[3.224,-0.1075],[3.2294,-0.1331],[3.236,-0.1583],[3.2439,-0.183],[3.2529,-0.2071],[3.263,-0.2307],[3.2741,-0.2534],[3.2862,-0.2753],[3.2993,-0.2964],[3.3134,-0.3167],[3.3284,-0.3362],[3.3445,-0.355],[3.3615,-0.3729],[3.3794,-0.3899],[3.398,-0.4059],[3.4175,-0.421],[3.4377,-0.4352],[3.4587,-0.4484],[3.4805,-0.4606],[3.5031,-0.4718],[3.5265,-0.4821],[3.5505,-0.4914],[3.575,-0.4993],[3.6,-0.5061],[3.6256,-0.5116],[3.6516,-0.5159],[3.6782,-0.519],[3.7053,-0.5208],[3.7329,-0.5214],[3.7612,-0.5208],[3.7888,-0.519],[3.8158,-0.5159],[3.8422,-0.5116],[3.8679,-0.5061],[3.8931,-0.4993],[3.9176,-0.4914],[3.9415,-0.4821],[3.9647,-0.4718],[3.9871,-0.4606],[4.0088,-0.4484],[4.0297,-0.4352],[4.0498,-0.421],[4.0692,-0.4059],[4.0879,-0.3899],[4.1058,-0.3729],[4.1228,-0.355],[4.1388,-0.3362],[4.1538,-0.3167],[4.1679,-0.2964],[4.181,-0.2753],[4.1931,-0.2534],[4.2042,-0.2307],[4.2143,-0.2071],[4.2234,-0.183],[4.2312,-0.1583],[4.2378,-0.1331],[4.2433,-0.1075],[4.2475,-0.0814],[4.2505,-0.0547],[4.2523,-0.0276],[4.2529,0.0],[4.2523,0.0279],[4.2505,0.0553],[4.2475,0.082],[4.2433,0.1082],[4.2378,0.1338],[4.2312,0.1588],[4.2234,0.1833],[4.2143,0.2071],[4.2042,0.2303],[4.193,0.2527],[4.1809,0.2743],[4.1677,0.2952],[4.1536,0.3152],[4.1384,0.3345],[4.1222,0.353],[4.105,0.3707],[4.087,0.3876],[4.0682,0.4035],[4.0487,0.4185],[4.0284,0.4325],[4.0074,0.4456],[3.9857,0.4578],[3.9632,0.469],[3.94,0.4793],[3.9162,0.4885],[3.8917,0.4965],[3.8667,0.5032],[3.8411,0.5088],[3.8149,0.513],[3.7882,0.5161],[3.7608,0.518],[3.7329,0.5186],[3.7056,0.518],[3.6788,0.5161],[3.6525,0.513],[3.6266,0.5088],[3.6013,0.5032],[3.5763,0.4965],[3.5519,0.4885],[3.5279,0.4793],[3.5045,0.469],[3.4819,0.4578],[3.4601,0.4456],[3.439,0.4325],[3.4186,0.4185],[3.3991,0.4035],[3.3802,0.3876],[3.3622,0.3707],[3.345,0.353],[3.3288,0.3345],[3.3137,0.3152],[3.2995,0.2952],[3.2863,0.2743],[3.2742,0.2527],[3.263,0.2303],[3.2529,0.2071],[3.2439,0.1833],[3.236,0.1588],[3.2294,0.1338],[3.224,0.1082],[3.2198,0.082],[3.2167,0.0553],[3.2149,0.0279]],"holes":[[[3.3929,0.0],[3.3936,0.0254],[3.3957,0.05],[3.3991,0.074],[3.404,0.0973],[3.4102,0.1199],[3.4178,0.1418],[3.4268,0.163],[3.4372,0.1836],[3.4488,0.2032],[3.4613,0.2217],[3.4749,0.2392],[3.4895,0.2555],[3.5051,0.2708],[3.5217,0.285],[3.5393,0.298],[3.5579,0.31],[3.5774,0.3207],[3.5975,0.33],[3.6183,0.3379],[3.6399,0.3443],[3.6621,0.3493],[3.685,0.3529],[3.7086,0.355],[3.7329,0.3557],[3.7579,0.355],[3.7821,0.3529],[3.8055,0.3493],[3.8281,0.3443],[3.8499,0.3379],[3.871,0.33],[3.8913,0.3207],[3.9108,0.31],[3.9293,0.298],[3.9469,0.285],[3.9634,0.2708],[3.9788,0.2555],[3.9932,0.2392],[4.0065,0.2217],[4.0188,0.2032],[4.03,0.1836],[4.0401,0.163],[4.0488,0.1418],[4.0562,0.1199],[4.0622,0.0973],[4.0669,0.074],[4.0702,0.05],[4.0722,0.0254],[4.0729,0.0],[4.0722,-0.0254],[4.0702,-0.05],[4.0668,-0.0739],[4.062,-0.0971],[4.0559,-0.1196],[4.0484,-0.1414],[4.0395,-0.1625],[4.0293,-0.1829],[4.0179,-0.2023],[4.0055,-0.2208],[3.992,-0.2381],[3.9775,-0.2545],[3.962,-0.2697],[3.9455,-0.284],[3.9279,-0.2972],[3.9093,-0.3093],[3.8899,-0.3202],[3.8696,-0.3296],[3.8487,-0.3376],[3.827,-0.3441],[3.8046,-0.3492],[3.7814,-0.3528],[3.7575,-0.355],[3.7329,-0.3557],[3.7086,-0.355],[3.685,-0.3528],[3.6621,-0.3492],[3.6399,-0.3441],[3.6183,-0.3376],[3.5975,-0.3296],[3.5774,-0.3202],[3.5579,-0.3093],[3.5393,-0.2972],[3.5217,-0.284],[3.5051,-0.2697],[3.4895,-0.2545],[3.4749,-0.2381],[3.4613,-0.2208],[3.4488,-0.2023],[3.4372,-0.1829],[3.4268,-0.1625],[3.4178,-0.1414],[3.4102,-0.1196],[3.404,-0.0971],[3.3991,-0.0739],[3.3957,-0.05],[3.3936,-0.0254]]]}]};
+  var NAVY = 0x262A63, WHITE = 0xFFFFFF;
+  function lin(hex) { return new THREE.Color(hex).convertSRGBToLinear(); }
+  var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var cards = Array.prototype.slice.call(document.querySelectorAll(".card"));
+  var io = ("IntersectionObserver" in window) ? new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting) e.target.classList.add("show"); });
+  }, { threshold: 0.35 }) : null;
+  cards.forEach(function (c) { io ? io.observe(c) : c.classList.add("show"); });
+
+  // ---------- WebGL ----------
+  var canvas = document.getElementById("scene");
+  var renderer;
+  try {
+    if (!window.THREE) throw new Error("three");
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: "high-performance" });
+  } catch (err) {
+    document.documentElement.classList.add("no3d");
+    return;
+  }
+  document.body.classList.add("locked");
+  var mobile = Math.min(screen.width, screen.height) < 820;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 2 : 1.75));
+  renderer.setClearColor(WHITE, 1);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(WHITE, 26, 78);
+  var camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xc9cde6, 0.9));
+  var sun = new THREE.DirectionalLight(0xffffff, 1.25);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(mobile ? 1024 : 2048, mobile ? 1024 : 2048);
+  var sc = sun.shadow.camera; sc.left = -22; sc.right = 22; sc.top = 22; sc.bottom = -22; sc.near = 1; sc.far = 80;
+  sun.shadow.bias = -0.0008;
+  scene.add(sun); scene.add(sun.target);
+
+  // Chão branco
+  var floor = new THREE.Mesh(new THREE.PlaneGeometry(400, 400),
+    new THREE.MeshStandardMaterial({ color: lin(WHITE), roughness: 0.95 }));
+  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+
+  // ---------- Labirinto (mesmo desenho do painel: módulos de 6 faixas girados 45°) ----------
+  var STRIPE = 1, NB = 6, S = NB * STRIPE, C = Math.SQRT1_2;
+  var wallMat = new THREE.MeshStandardMaterial({ color: lin(NAVY), roughness: 0.6, metalness: 0.0 });
+  var bands = [];
+  var X0 = -34, X1 = 34, Z0 = -96, Z1 = 22;
+  var n = 22;
+  for (var i = -n; i <= n; i++) {
+    for (var j = -n; j <= n; j++) {
+      for (var k = 0; k < NB; k += 2) {
+        var a0 = k * STRIPE, b0 = (k + 1) * STRIPE;
+        var L = [[0, a0], [a0, a0], [a0, 0], [b0, 0], [b0, b0], [0, b0]];
+        var pts = [], cx = 0, cz = 0;
+        for (var q = 0; q < L.length; q++) {
+          var a = L[q][0], b = L[q][1];
+          if ((i + j) % 2 !== 0) a = S - a;
+          var u = i * S + a, v = j * S + b;
+          var x = (u + v) * C, z = (u - v) * C;
+          pts.push([x, z]); cx += x; cz += z;
+        }
+        cx /= pts.length; cz /= pts.length;
+        if (cx < X0 || cx > X1 || cz < Z0 || cz > Z1) continue;
+        var shape = new THREE.Shape();
+        // forma no plano XY local; depois giramos para o chão (y = -z)
+        for (var p = 0; p < pts.length; p++) {
+          var lx = pts[p][0] - cx, ly = -(pts[p][1] - cz);
+          if (p === 0) shape.moveTo(lx, ly); else shape.lineTo(lx, ly);
+        }
+        shape.closePath();
+        var geo = new THREE.ExtrudeGeometry(shape, { depth: 1, bevelEnabled: false });
+        geo.rotateX(-Math.PI / 2);
+        var m = new THREE.Mesh(geo, wallMat);
+        m.position.set(cx, 0, cz);
+        m.castShadow = true; m.receiveShadow = true;
+        var d = Math.hypot(cx, cz);
+        // vale baixo em volta do nome (como a lona do chão) e paredes altas ao redor
+        var valley = smooth(7, 14, Math.hypot(cx * 0.8, cz * 1.2));
+        m.userData = { cx: cx, cz: cz, d: d, base: 0.035 + valley * 2.25, side: cx < 0 ? -1 : 1, open: 0 };
+        m.scale.y = 0.035;
+        scene.add(m); bands.push(m);
+      }
+    }
+  }
+
+  // ---------- Nome em 3D ----------
+  var nameGroup = new THREE.Group();
+  var nameShapes = GLYPHS.shapes.map(function (s) {
+    var sh = new THREE.Shape(s.outer.map(function (p) { return new THREE.Vector2(p[0], p[1]); }));
+    s.holes.forEach(function (h) { sh.holes.push(new THREE.Path(h.map(function (p) { return new THREE.Vector2(p[0], p[1]); }))); });
+    return sh;
+  });
+  var nameGeo = new THREE.ExtrudeGeometry(nameShapes, {
+    depth: 0.32, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.022, bevelSegments: 3, curveSegments: 4
+  });
+  nameGeo.translate(0, 0, -0.16);
+  var nameMat = new THREE.MeshStandardMaterial({ color: lin(NAVY), roughness: 0.35, metalness: 0.15 });
+  var nameMesh = new THREE.Mesh(nameGeo, nameMat);
+  nameMesh.castShadow = true;
+  nameGroup.add(nameMesh);
+  var NAME_Y = 4.6;
+  nameGroup.position.set(0, NAME_Y, 0);
+  scene.add(nameGroup);
+
+  // ---------- Câmera guiada pela rolagem ----------
+  function smooth(e0, e1, x) { var t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function ease(t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+
+  var nameScale = 1; // diminui o nome em telas estreitas para caber inteiro
+  var keys = [
+    // p, posição, alvo
+    [0.00, [0, 3.4, 15], [0, 4.4, 0]],
+    [0.14, [0, 8.5, 3.0], [0, 0.0, -10]],
+    [0.24, [0, 4.0, -7], [0, -1.2, -18]],
+    [0.78, [0, 3.8, -62], [0, -1.4, -73]],
+    [0.90, [0, 22, -58], [0, 0, -72]],
+    [1.00, [0, 34, -66], [0, 0, -72.5]]
+  ];
+  function camAt(p, out, tgt) {
+    for (var s = 0; s < keys.length - 1; s++) {
+      var A = keys[s], B = keys[s + 1];
+      if (p <= B[0] || s === keys.length - 2) {
+        var t = ease(Math.min(1, Math.max(0, (p - A[0]) / (B[0] - A[0]))));
+        out.set(lerp(A[1][0], B[1][0], t), lerp(A[1][1], B[1][1], t), lerp(A[1][2], B[1][2], t));
+        tgt.set(lerp(A[2][0], B[2][0], t), lerp(A[2][1], B[2][1], t), lerp(A[2][2], B[2][2], t));
+        return;
+      }
+    }
+  }
+
+  // ---------- Entrada / giroscópio / toque ----------
+  var started = false, t0 = 0;
+  var tilt = { x: 0, y: 0 }, tiltT = { x: 0, y: 0 };
+  function onOrient(e) {
+    if (e.gamma == null) return;
+    tiltT.x = Math.max(-1, Math.min(1, e.gamma / 28));
+    tiltT.y = Math.max(-1, Math.min(1, (e.beta - 45) / 28));
+  }
+  window.addEventListener("pointermove", function (e) {
+    if (e.pointerType === "mouse") {
+      tiltT.x = (e.clientX / innerWidth) * 2 - 1;
+      tiltT.y = (e.clientY / innerHeight) * 2 - 1;
+    }
+  }, { passive: true });
+
+  document.getElementById("enter").addEventListener("click", function () {
+    var DOE = window.DeviceOrientationEvent;
+    if (DOE && typeof DOE.requestPermission === "function") {
+      DOE.requestPermission().then(function (r) { if (r === "granted") addEventListener("deviceorientation", onOrient); }).catch(function () {});
+    } else if (DOE) {
+      addEventListener("deviceorientation", onOrient);
+    }
+    started = true; t0 = performance.now();
+    document.getElementById("gate").classList.add("gone");
+    document.body.classList.remove("locked");
+    document.body.classList.add("in");
+  });
+
+  // ---------- Loop ----------
+  var camPos = new THREE.Vector3(), camTgt = new THREE.Vector3();
+  var sp = 0, spT = 0;
+  function progress() {
+    var max = document.documentElement.scrollHeight - innerHeight;
+    return max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0;
+  }
+  function resize() {
+    var w = innerWidth, h = innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.fov = w / h < 0.75 ? 58 : 48;
+    camera.updateProjectionMatrix();
+    var hHalf = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
+    nameScale = Math.min(1, (hHalf * 15.05 - 1.3) / (GLYPHS.w / 2));
+    nameGroup.scale.setScalar(nameScale);
+  }
+  addEventListener("resize", resize); resize();
+
+  var clock = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    var dt = Math.min(0.05, (now - clock) / 1000); clock = now;
+    var since = started ? (now - t0) / 1000 : 0;
+
+    spT = progress();
+    sp += (spT - sp) * Math.min(1, dt * 5);
+    tilt.x += (tiltT.x - tilt.x) * Math.min(1, dt * 4);
+    tilt.y += (tiltT.y - tilt.y) * Math.min(1, dt * 4);
+
+    camAt(sp, camPos, camTgt);
+    // leve balanço no voo pelo corredor
+    var fly = smooth(0.2, 0.3, sp) * (1 - smooth(0.74, 0.86, sp));
+    camPos.x += Math.sin(sp * 34) * 0.55 * fly;
+    // giroscópio / mouse
+    camPos.x += tilt.x * 1.6; camPos.y += -tilt.y * 0.9;
+    camera.position.copy(camPos);
+    camera.lookAt(camTgt);
+
+    sun.position.set(camTgt.x - 14, 26, camTgt.z + 10);
+    sun.target.position.copy(camTgt);
+
+    // abertura (sobe em onda a partir do centro) e achatamento no fim (vista de cima = painel)
+    var flatten = smooth(0.84, 0.98, sp);
+    var camZ = camera.position.z;
+    for (var b = 0; b < bands.length; b++) {
+      var m = bands[b], u = m.userData;
+      var rise = reduced ? (started ? 1 : 0) : smooth(0, 1, (since - u.d * 0.035) / 1.1);
+      if (!started) rise = 0;
+      var h = lerp(0.035, u.base, rise);
+      h = lerp(h, 0.035, flatten);
+      m.scale.y = Math.max(0.035, h);
+      // portas: o que está no caminho da câmera abre para os lados
+      var inPath = Math.abs(u.cx) < 5.2 && u.cz < -2;
+      var target = 0;
+      if (inPath) {
+        var dz = u.cz - camZ; // negativo = à frente
+        target = smooth(-26, -9, dz) * (1 - smooth(4, 14, dz));
+        target *= Math.max(fly, smooth(0.1, 0.2, sp)) * (1 - flatten);
+      }
+      u.open += (target - u.open) * Math.min(1, dt * 6);
+      m.position.x = u.cx + u.side * u.open * (5.6 - Math.abs(u.cx) * 0.4);
+    }
+
+    // nome: cai no lugar, respira e acompanha o giroscópio
+    var drop = started ? (reduced ? 1 : smooth(0.15, 1.6, since)) : 0;
+    nameGroup.position.y = NAME_Y + (1 - drop) * 7 + Math.sin(now / 900) * 0.08;
+    nameGroup.rotation.y = tilt.x * 0.22 + Math.sin(now / 2400) * 0.05;
+    nameGroup.rotation.x = -tilt.y * 0.08;
+    nameMesh.visible = started && sp < 0.3;
+
+    renderer.render(scene, camera);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
