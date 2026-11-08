@@ -24,7 +24,8 @@
   color-scheme: light;
 }
 /* Identidade fixa (azul-marinho sobre branco), igual ao painel da festa: não muda com o tema escuro. */
-html, body { background: var(--paper); color: var(--ink); }
+*, *::before, *::after { box-sizing: border-box; }
+html, body { background: var(--paper); color: var(--ink); max-width: 100%; overflow-x: hidden; }
 body {
   font-family: var(--body);
   overflow-x: hidden;
@@ -87,16 +88,34 @@ main {
 }
 .hero { align-content: end; padding-block: 0 9vh; }
 .hint {
-  display: grid; justify-items: center; gap: 10px;
-  font-size: 12px; letter-spacing: 0.3em; text-indent: 0.3em; text-transform: uppercase;
-  color: var(--navy); opacity: 0; transition: opacity 1s ease 1.6s;
+  position: fixed; left: 50%; z-index: 5;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 5vh);
+  transform: translateX(-50%);
+  display: grid; justify-items: center; gap: 6px;
+  padding: 14px 22px 12px;
+  background: var(--paper-glass);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  box-shadow: 0 14px 34px rgba(38,42,99,0.18);
+  font-family: var(--display); font-weight: 600;
+  font-size: 13px; letter-spacing: 0.26em; text-indent: 0.26em; text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--navy);
+  opacity: 0; visibility: hidden;
+  transition: opacity .7s ease, visibility .7s;
+  pointer-events: none;
 }
-body.in .hint { opacity: .8; }
-.hint i {
-  width: 1px; height: 38px; background: var(--navy);
-  transform-origin: top; animation: drip 1.8s ease-in-out infinite;
+body.in .hint.on { opacity: 1; visibility: visible; }
+.chev { display: grid; justify-items: center; height: 22px; }
+.chev b {
+  display: block; width: 11px; height: 11px; margin-top: -4px;
+  border-right: 2px solid var(--navy); border-bottom: 2px solid var(--navy);
+  transform: rotate(45deg);
+  animation: chev 1.4s ease-in-out infinite;
 }
-@keyframes drip { 0% { transform: scaleY(0); } 50% { transform: scaleY(1); } 100% { transform: scaleY(1); opacity: 0; } }
+.chev b:nth-child(2) { animation-delay: .18s; }
+@keyframes chev { 0%, 100% { opacity: .15; transform: translateY(-3px) rotate(45deg); } 50% { opacity: 1; transform: translateY(3px) rotate(45deg); } }
 
 .line { min-height: 92vh; min-height: 92svh; }
 .card {
@@ -128,8 +147,8 @@ body.in .hint { opacity: .8; }
 .thanks {
   margin: 0 0 18px;
   font-family: var(--display); font-weight: 600;
-  font-size: clamp(40px, 13vw, 72px);
-  letter-spacing: 0.16em; text-indent: 0.16em;
+  font-size: clamp(30px, 10vw, 72px);
+  letter-spacing: 0.12em; text-indent: 0.12em;
   text-transform: uppercase;
   line-height: 1;
   color: var(--navy);
@@ -147,7 +166,7 @@ body.in .hint { opacity: .8; }
 
 @media (prefers-reduced-motion: reduce) {
   .card { transition: none; opacity: 1; transform: none; }
-  #enter, .hint i { animation: none; }
+  #enter, .chev b { animation: none; }
 }
 </style>
 
@@ -162,9 +181,11 @@ body.in .hint { opacity: .8; }
   </div>
 </div>
 
+<div class="hint" id="hint" aria-hidden="true">Role para baixo<span class="chev"><b></b><b></b></span></div>
+
 <main id="story">
   <section class="screen hero" aria-label="Pedrinho">
-    <div class="hint" aria-hidden="true">Role<i></i></div>
+    
   </section>
 
   <section class="screen line"><div class="card"><p>Ter vocês aqui hoje é o melhor presente que eu poderia receber.</p></div></section>
@@ -345,9 +366,20 @@ body.in .hint { opacity: .8; }
     document.getElementById("gate").classList.add("gone");
     document.body.classList.remove("locked");
     document.body.classList.add("in");
+    // dica de rolagem: aparece depois da abertura e some no primeiro movimento
+    setTimeout(function () { if (scrollY < 40) hint.classList.add("on"); }, 2200);
+    // se ninguém rolar, a câmera começa o mergulho sozinha, de leve, pra mostrar o caminho
+    setTimeout(function () {
+      if (scrollY < 10 && !reduced) scrollTo({ top: Math.round(innerHeight * 0.6), behavior: "smooth" });
+    }, 7000);
   });
 
   // ---------- Loop ----------
+  var hint = document.getElementById("hint");
+  addEventListener("scroll", function () {
+    if (scrollY > 40) hint.classList.remove("on");
+  }, { passive: true });
+
   var camPos = new THREE.Vector3(), camTgt = new THREE.Vector3();
   var sp = 0, spT = 0;
   function progress() {
